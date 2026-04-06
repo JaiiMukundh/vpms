@@ -53,6 +53,19 @@ function toPayload(fields, form) {
   return payload;
 }
 
+function isFieldVisible(field, form) {
+  if (!field.showWhen) {
+    return true;
+  }
+
+  const targetValue = form[field.showWhen.field];
+  if (Array.isArray(field.showWhen.value)) {
+    return field.showWhen.value.includes(targetValue);
+  }
+
+  return targetValue === field.showWhen.value;
+}
+
 export default function ResourcePage({ definition }) {
   const [rows, setRows] = useState([]);
   const [options, setOptions] = useState({});
@@ -82,15 +95,24 @@ export default function ResourcePage({ definition }) {
   }, [definition.endpoint]);
 
   const loadLookups = useCallback(async () => {
-    const lookups = [...new Set(definition.fields.filter((field) => field.source).map((field) => field.source))];
     const result = {};
 
     await Promise.all(
-      lookups.map(async (source) => {
-        const response = await fetch(`/api/resources/${source}?options=1`, { cache: "no-store" });
-        const data = await response.json();
-        result[source] = data.options || [];
-      }),
+      definition.fields
+        .filter((field) => field.source)
+        .map(async (field) => {
+          const optionKey = `${field.source}${field.optionQuery ? `?${field.optionQuery}` : ""}`;
+          if (result[optionKey]) {
+            return;
+          }
+
+          const response = await fetch(
+            `/api/resources/${field.source}?options=1${field.optionQuery ? `&${field.optionQuery}` : ""}`,
+            { cache: "no-store" },
+          );
+          const data = await response.json();
+          result[optionKey] = data.options || [];
+        }),
     );
 
     setOptions(result);
@@ -127,7 +149,17 @@ export default function ResourcePage({ definition }) {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    setForm((current) => {
+      const nextForm = { ...current, [name]: value };
+
+      definition.fields.forEach((field) => {
+        if (field.showWhen && field.showWhen.field === name && !isFieldVisible(field, nextForm)) {
+          nextForm[field.name] = "";
+        }
+      });
+
+      return nextForm;
+    });
   };
 
   const openCreate = () => {
@@ -308,26 +340,26 @@ export default function ResourcePage({ definition }) {
       >
         <form onSubmit={submit} className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2">
-            {definition.fields.map((field) => (
+            {definition.fields.map((field) =>
+              isFieldVisible(field, form) ? (
               <FormField
                 key={field.name}
                 field={field}
                 value={form[field.name] ?? ""}
                 error={errors[field.name]}
                 onChange={handleChange}
-                options={field.options || (field.source ? options[field.source] || [] : [])}
+                options={
+                  field.options ||
+                  (field.source
+                    ? options[`${field.source}${field.optionQuery ? `?${field.optionQuery}` : ""}`] || []
+                    : [])
+                }
               />
-            ))}
+            ) : null,
+            )}
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Cancel
-            </button>
+          <div className="flex items-center justify-end border-t border-slate-200 pt-4">
             <button
               type="submit"
               disabled={saving}

@@ -20,6 +20,46 @@ function buildSelectSql(definition) {
   return `SELECT * FROM ${definition.table} ORDER BY ${definition.sortBy || definition.key}`;
 }
 
+function buildVehicleOptionsSql(optionsOnly, availableFor) {
+  if (!optionsOnly) {
+    return null;
+  }
+
+  if (availableFor === "entry") {
+    return `
+      SELECT v.vehicle_id, v.vehicle_number, v.vehicle_type, o.full_name AS owner_name
+      FROM vehicles v
+      LEFT JOIN owners o ON o.owner_id = v.owner_id
+      WHERE v.status = 'ACTIVE'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM entries e
+          WHERE e.vehicle_id = v.vehicle_id
+            AND e.status = 'ACTIVE'
+        )
+      ORDER BY v.vehicle_number ASC
+    `;
+  }
+
+  if (availableFor === "pass") {
+    return `
+      SELECT v.vehicle_id, v.vehicle_number, v.vehicle_type, o.full_name AS owner_name
+      FROM vehicles v
+      LEFT JOIN owners o ON o.owner_id = v.owner_id
+      WHERE v.status = 'ACTIVE'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM passes p
+          WHERE p.vehicle_id = v.vehicle_id
+            AND p.status = 'ACTIVE'
+        )
+      ORDER BY v.vehicle_number ASC
+    `;
+  }
+
+  return null;
+}
+
 function buildInsertSql(definition, payload) {
   const fields = definition.fields.filter((field) => payload[field.name] !== undefined);
   if (!fields.length) {
@@ -27,9 +67,11 @@ function buildInsertSql(definition, payload) {
   }
 
   const columns = fields.map((field) => field.name);
-  const binds = columns.map((field) => `:${field}`).join(", ");
+  const values = fields
+    .map((field) => (field.type === "date" ? `TO_DATE(:${field.name}, 'YYYY-MM-DD')` : `:${field.name}`))
+    .join(", ");
   return {
-    sql: `INSERT INTO ${definition.table} (${columns.join(", ")}) VALUES (${binds})`,
+    sql: `INSERT INTO ${definition.table} (${columns.join(", ")}) VALUES (${values})`,
     columns,
   };
 }
@@ -40,7 +82,9 @@ function buildUpdateSql(definition, payload) {
     throw new Error(`No writable fields configured for ${definition.table}.`);
   }
 
-  const assignments = fields.map((field) => `${field.name} = :${field.name}`).join(", ");
+  const assignments = fields
+    .map((field) => `${field.name} = ${field.type === "date" ? `TO_DATE(:${field.name}, 'YYYY-MM-DD')` : `:${field.name}`}`)
+    .join(", ");
   return {
     sql: `UPDATE ${definition.table} SET ${assignments} WHERE ${definition.key} = :id`,
     fields,
@@ -86,7 +130,9 @@ export async function GET(request, { params }) {
     const definition = getDefinition(resolvedParams.resource);
     const url = new URL(request.url);
     const optionsOnly = url.searchParams.get("options") === "1";
-    const result = await query(buildSelectSql(definition));
+    const availableFor = url.searchParams.get("availableFor");
+    const vehicleOptionsSql = buildVehicleOptionsSql(optionsOnly, availableFor);
+    const result = await query(vehicleOptionsSql || buildSelectSql(definition));
     const rows = result.rows || [];
 
     if (optionsOnly) {

@@ -32,7 +32,7 @@ export default function MovementPage({ mode }) {
     setLoading(true);
     try {
       const [vehicleResponse, staffResponse] = await Promise.all([
-        fetch("/api/resources/vehicles?options=1", { cache: "no-store" }),
+        fetch("/api/resources/vehicles?options=1&availableFor=entry", { cache: "no-store" }),
         fetch("/api/resources/staff?options=1", { cache: "no-store" }),
       ]);
 
