@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# VPMS - Vehicle Parking Management System
 
-## Getting Started
+College-level mini project built with:
 
-First, run the development server:
+- Next.js App Router
+- JavaScript only
+- Tailwind CSS
+- Oracle Database
+- PL/SQL package, procedures, functions, triggers, and views
+- `node-oracledb`
+
+## Features
+
+- Dashboard with live parking summary
+- Owners, vehicles, zones, slots, staff, passes, violations, and payments pages
+- Entry and exit workflows with slot reservation and fee calculation
+- Oracle-backed reports for parking operations
+- Clean responsive sidebar dashboard UI
+
+## Folder Structure
+
+- `app/` - Next.js routes, API routes, and page screens
+- `components/` - Reusable UI building blocks
+- `lib/` - Oracle connection and shared VPMS metadata
+- `sql/` - Oracle schema, PL/SQL, and seed scripts
+- `utils/` - Small display/formatting helpers
+
+## Setup
+
+1. Copy `.env.local.example` to `.env.local` and fill in Oracle credentials.
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Run the Oracle scripts in this order:
+
+```sql
+@sql/schema.sql
+@sql/plsql.sql
+@sql/seed.sql
+```
+
+If you already have the data loaded and only need to fix identity counters after manual inserts or reruns, run:
+
+```sql
+@sql/sync_identities.sql
+```
+
+4. Start the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Build for production:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```bash
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Oracle Notes
 
-## Learn More
+- The project uses connection pooling through `node-oracledb`.
+- Keep the Oracle service and Instant Client available on the machine.
+- The app expects the schema objects created by the SQL scripts before opening the dashboard.
+- After loading the seed data, the identity counters are synced so new inserts do not collide with seeded primary keys.
 
-To learn more about Next.js, take a look at the following resources:
+## Demo Flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Open the dashboard.
+2. Add or review owners and vehicles.
+3. Record a vehicle entry and exit.
+4. Check payments, passes, violations, and reports.
