@@ -124,6 +124,55 @@ function formatDeleteError(definition, error) {
   };
 }
 
+function formatSaveError(definition, error) {
+  const isUniqueViolation = error?.errorNum === 1 || /ORA-00001/i.test(error?.message || "");
+
+  if (!isUniqueViolation) {
+    return {
+      message: error?.message || "Save failed.",
+      status: 400,
+    };
+  }
+
+  if (definition.table === "slots") {
+    return {
+      message:
+        "This slot code already exists. Please enter a different slot code because each parking slot must be unique.",
+      status: 409,
+    };
+  }
+
+  if (definition.table === "vehicles") {
+    return {
+      message:
+        "This vehicle number already exists. Please use a different vehicle number because duplicates are not allowed.",
+      status: 409,
+    };
+  }
+
+  if (definition.table === "owners") {
+    return {
+      message:
+        "This owner already exists with the same phone number or email address. Please use unique contact details.",
+      status: 409,
+    };
+  }
+
+  if (definition.table === "staff") {
+    return {
+      message:
+        "This staff record already uses a duplicate phone number or username. Please choose unique values.",
+      status: 409,
+    };
+  }
+
+  return {
+    message:
+      `A record with the same unique value already exists in ${definition.title.toLowerCase()}. Please use a different value.`,
+    status: 409,
+  };
+}
+
 export async function GET(request, { params }) {
   try {
     const resolvedParams = await Promise.resolve(params);
@@ -159,7 +208,10 @@ export async function POST(request, { params }) {
     await execute(sql, binds);
     return NextResponse.json({ message: `${definition.title} created successfully.` });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    const resolvedParams = await Promise.resolve(params);
+    const definition = getDefinition(resolvedParams.resource);
+    const formatted = formatSaveError(definition, error);
+    return NextResponse.json({ error: formatted.message }, { status: formatted.status });
   }
 }
 
@@ -180,7 +232,10 @@ export async function PATCH(request, { params }) {
     await execute(sql, binds);
     return NextResponse.json({ message: `${definition.title} updated successfully.` });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    const resolvedParams = await Promise.resolve(params);
+    const definition = getDefinition(resolvedParams.resource);
+    const formatted = formatSaveError(definition, error);
+    return NextResponse.json({ error: formatted.message }, { status: formatted.status });
   }
 }
 
