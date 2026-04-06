@@ -55,6 +55,31 @@ async function readBody(request) {
   }
 }
 
+function formatDeleteError(definition, error) {
+  const isChildRecordError = error?.errorNum === 2292 || /ORA-02292/i.test(error?.message || "");
+
+  if (!isChildRecordError) {
+    return {
+      message: error?.message || "Delete failed.",
+      status: 400,
+    };
+  }
+
+  if (definition.table === "owners") {
+    return {
+      message:
+        "Cannot delete this owner because one or more vehicles are assigned to them. Delete or reassign the vehicles first.",
+      status: 409,
+    };
+  }
+
+  return {
+    message:
+      `Cannot delete this ${definition.singularTitle.toLowerCase()} because related records exist. Remove the child records first.`,
+    status: 409,
+  };
+}
+
 export async function GET(request, { params }) {
   try {
     const resolvedParams = await Promise.resolve(params);
@@ -128,6 +153,9 @@ export async function DELETE(request, { params }) {
     });
     return NextResponse.json({ message: `${definition.title} deleted successfully.` });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    const resolvedParams = await Promise.resolve(params);
+    const definition = getDefinition(resolvedParams.resource);
+    const formatted = formatDeleteError(definition, error);
+    return NextResponse.json({ error: formatted.message }, { status: formatted.status });
   }
 }

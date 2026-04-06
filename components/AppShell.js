@@ -69,15 +69,6 @@ export default function AppShell({ children }) {
             })}
           </nav>
 
-          <div className="mt-auto rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Database
-            </p>
-            <p className="mt-2 text-sm font-medium text-slate-700">Oracle + PL/SQL</p>
-            <p className="mt-1 text-sm text-slate-500">
-              Parameterized Next.js API routes with pooled connections.
-            </p>
-          </div>
         </aside>
 
         <main className="flex min-h-screen flex-1 flex-col gap-6">
