@@ -99,6 +99,18 @@ async function readBody(request) {
   }
 }
 
+function normalizeFieldValue(field, value) {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (field?.name === "vehicle_number") {
+    return String(value).trim().toUpperCase();
+  }
+
+  return value;
+}
+
 function formatDeleteError(definition, error) {
   const isChildRecordError = error?.errorNum === 2292 || /ORA-02292/i.test(error?.message || "");
 
@@ -204,7 +216,12 @@ export async function POST(request, { params }) {
     const definition = getDefinition(resolvedParams.resource);
     const payload = await readBody(request);
     const { sql, columns } = buildInsertSql(definition, payload);
-    const binds = Object.fromEntries(columns.map((column) => [column, payload[column] ?? null]));
+    const binds = Object.fromEntries(
+      columns.map((column) => {
+        const field = definition.fields.find((item) => item.name === column);
+        return [column, normalizeFieldValue(field, payload[column] ?? null)];
+      }),
+    );
     await execute(sql, binds);
     return NextResponse.json({ message: `${definition.title} created successfully.` });
   } catch (error) {
@@ -227,7 +244,9 @@ export async function PATCH(request, { params }) {
 
     const payload = await readBody(request);
     const { sql, fields } = buildUpdateSql(definition, payload);
-    const binds = Object.fromEntries(fields.map((field) => [field.name, payload[field.name] ?? null]));
+    const binds = Object.fromEntries(
+      fields.map((field) => [field.name, normalizeFieldValue(field, payload[field.name] ?? null)]),
+    );
     binds.id = Number.isNaN(Number(id)) ? id : Number(id);
     await execute(sql, binds);
     return NextResponse.json({ message: `${definition.title} updated successfully.` });

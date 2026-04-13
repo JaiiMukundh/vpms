@@ -79,7 +79,7 @@ BEGIN
   UPDATE entries
      SET entry_time = SYSDATE - (2 / 24)
    WHERE entry_id = v_entry_id;
-  vpms_pkg.register_exit(v_entry_id, 3, 'UPI', 'UPI-1001', v_exit_id, v_fee_id, v_payment_id);
+  vpms_pkg.register_exit(v_entry_id, 3, 'UPI', NULL, v_exit_id, v_fee_id, v_payment_id);
 END;
 /
 
@@ -94,7 +94,7 @@ BEGIN
   UPDATE entries
      SET entry_time = SYSDATE - (3 / 24)
    WHERE entry_id = v_entry_id;
-  vpms_pkg.register_exit(v_entry_id, 3, 'CASH', 'CASH-1002', v_exit_id, v_fee_id, v_payment_id);
+  vpms_pkg.register_exit(v_entry_id, 3, 'CASH', NULL, v_exit_id, v_fee_id, v_payment_id);
 END;
 /
 

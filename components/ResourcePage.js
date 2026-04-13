@@ -269,9 +269,6 @@ export default function ResourcePage({ definition }) {
       <div className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm xl:flex-row xl:items-center xl:justify-between">
         <div className="flex-1">
           <h2 className="text-xl font-semibold text-slate-950">{definition.title}</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Search, create, edit, and remove {definition.title.toLowerCase()} records.
-          </p>
         </div>
         <div className="flex flex-col gap-3 md:flex-row">
           <input
