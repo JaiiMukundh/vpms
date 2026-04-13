@@ -66,6 +66,18 @@ function isFieldVisible(field, form) {
   return targetValue === field.showWhen.value;
 }
 
+function getNormalizedValue(field, value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (field.type === "number" || field.valueType === "number") {
+    return String(value).trim();
+  }
+
+  return String(value).trim();
+}
+
 export default function ResourcePage({ definition }) {
   const [rows, setRows] = useState([]);
   const [options, setOptions] = useState({});
@@ -197,8 +209,17 @@ export default function ResourcePage({ definition }) {
       }
 
       const value = form[field.name];
-      if (value === undefined || value === null || String(value).trim() === "") {
+      const normalizedValue = getNormalizedValue(field, value);
+      if (normalizedValue === "") {
         nextErrors[field.name] = `${field.label} is required.`;
+        return;
+      }
+
+      if (field.pattern) {
+        const regex = new RegExp(field.pattern);
+        if (!regex.test(normalizedValue)) {
+          nextErrors[field.name] = field.validationMessage || `${field.label} is invalid.`;
+        }
       }
     });
 

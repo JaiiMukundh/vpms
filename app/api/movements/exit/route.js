@@ -4,6 +4,24 @@ import { query, withConnection } from "@/lib/db";
 
 export const runtime = "nodejs";
 
+async function ensureActiveStaff(staffId) {
+  const result = await query(
+    `SELECT staff_id, staff_name, status
+       FROM staff
+      WHERE staff_id = :staff_id`,
+    { staff_id: staffId },
+  );
+
+  const staff = result.rows?.[0];
+  if (!staff) {
+    throw new Error("Selected staff member was not found.");
+  }
+
+  if (staff.status !== "ACTIVE") {
+    throw new Error("Please select an active staff member.");
+  }
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -15,6 +33,8 @@ export async function POST(request) {
     if (!entryId || !staffId) {
       throw new Error("Entry and staff are required.");
     }
+
+    await ensureActiveStaff(staffId);
 
     const result = await withConnection(async (connection) =>
       connection.execute(
@@ -57,4 +77,3 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }
-

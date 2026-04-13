@@ -39,8 +39,11 @@ export default function FormField({
           value={value}
           onChange={onChange}
           placeholder={placeholder || field.label}
+          inputMode={field.inputMode}
           step={field.step}
           min={field.min}
+          maxLength={field.maxLength}
+          autoComplete={field.autoComplete}
           className={baseClass}
         />
       )}
@@ -48,4 +51,3 @@ export default function FormField({
     </label>
   );
 }
-

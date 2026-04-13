@@ -7,6 +7,12 @@ import { paymentModeOptions } from "@/lib/vpms-data";
 import { subscribeDataRefresh, triggerDataRefresh } from "@/utils/data-refresh";
 import { formatDateTime } from "@/utils/format";
 
+const staffNameOverrides = {
+  1: "Arjun Nair",
+  2: "Priya Kulkarni",
+  3: "Vivek Bansal",
+};
+
 export default function MovementPage({ mode }) {
   const [vehicles, setVehicles] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -35,7 +41,12 @@ export default function MovementPage({ mode }) {
       const staffData = await staffResponse.json();
 
       setVehicles(vehicleData.options || []);
-      setStaff(staffData.options || []);
+      setStaff(
+        (staffData.options || []).map((option) => ({
+          ...option,
+          label: staffNameOverrides[String(option.value)] || option.label,
+        })),
+      );
 
       if (!isEntryMode) {
         const parkedResponse = await fetch("/api/reports/currently-parked", { cache: "no-store" });
@@ -124,8 +135,8 @@ export default function MovementPage({ mode }) {
 
   const title = isEntryMode ? "Vehicle Entry" : "Vehicle Exit";
   const description = isEntryMode
-    ? "Reserve the first available matching slot and record the vehicle arrival."
-    : "Close the active parking record, calculate the fee, and free the slot.";
+    ? "Staff records the vehicle arrival and allocates the first compatible slot."
+    : "Staff closes the active parking record, calculates the fee, and frees the slot.";
 
   return (
     <div className="space-y-5">

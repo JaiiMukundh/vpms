@@ -103,7 +103,7 @@ CREATE OR REPLACE PACKAGE BODY vpms_pkg AS
      WHERE slot_id = p_slot_id;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
-      RAISE_APPLICATION_ERROR(-20002, 'No available slot found for this vehicle type.');
+      RAISE_APPLICATION_ERROR(-20002, 'All compatible slots are currently occupied for this vehicle type.');
   END register_entry;
 
   PROCEDURE register_exit(
@@ -451,4 +451,3 @@ LEFT JOIN (
     p.paid_at
   FROM payments p
 ) pmt ON pmt.fee_id = f.fee_id;
-

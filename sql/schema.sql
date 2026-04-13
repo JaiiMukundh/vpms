@@ -9,7 +9,8 @@ CREATE TABLE owners (
   address VARCHAR2(250),
   created_at DATE DEFAULT SYSDATE NOT NULL,
   CONSTRAINT uq_owners_phone UNIQUE (phone),
-  CONSTRAINT uq_owners_email UNIQUE (email)
+  CONSTRAINT uq_owners_email UNIQUE (email),
+  CONSTRAINT ck_owners_phone_digits CHECK (REGEXP_LIKE(TRIM(phone), '^[0-9]{10}$'))
 );
 
 CREATE TABLE vehicles (
@@ -68,8 +69,9 @@ CREATE TABLE staff (
   created_at DATE DEFAULT SYSDATE NOT NULL,
   CONSTRAINT uq_staff_phone UNIQUE (phone),
   CONSTRAINT uq_staff_username UNIQUE (username),
-  CONSTRAINT ck_staff_role CHECK (role IN ('ADMIN', 'ATTENDANT', 'SUPERVISOR')),
-  CONSTRAINT ck_staff_status CHECK (status IN ('ACTIVE', 'INACTIVE'))
+  CONSTRAINT ck_staff_role CHECK (role IN ('ATTENDANT', 'SUPERVISOR')),
+  CONSTRAINT ck_staff_status CHECK (status IN ('ACTIVE', 'INACTIVE')),
+  CONSTRAINT ck_staff_phone_digits CHECK (REGEXP_LIKE(TRIM(phone), '^[0-9]{10}$'))
 );
 
 CREATE TABLE entries (

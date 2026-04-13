@@ -40,9 +40,9 @@ INSERT INTO slots (slot_id, zone_id, slot_code, slot_type, status) VALUES (6, 2,
 INSERT INTO slots (slot_id, zone_id, slot_code, slot_type, status) VALUES (7, 3, 'C1', 'HEAVY_VEHICLE', 'AVAILABLE');
 INSERT INTO slots (slot_id, zone_id, slot_code, slot_type, status) VALUES (8, 3, 'C2', 'FOUR_WHEELER', 'AVAILABLE');
 
-INSERT INTO staff (staff_id, staff_name, role, phone, username, password_hash, status) VALUES (1, 'Admin One', 'ADMIN', '9100000001', 'admin', 'admin123', 'ACTIVE');
-INSERT INTO staff (staff_id, staff_name, role, phone, username, password_hash, status) VALUES (2, 'Gate Attendant', 'ATTENDANT', '9100000002', 'attendant1', 'gate123', 'ACTIVE');
-INSERT INTO staff (staff_id, staff_name, role, phone, username, password_hash, status) VALUES (3, 'Shift Supervisor', 'SUPERVISOR', '9100000003', 'supervisor', 'super123', 'ACTIVE');
+INSERT INTO staff (staff_id, staff_name, role, phone, username, password_hash, status) VALUES (1, 'Arjun Nair', 'ATTENDANT', '9100000001', 'arjun1', 'arjun123', 'ACTIVE');
+INSERT INTO staff (staff_id, staff_name, role, phone, username, password_hash, status) VALUES (2, 'Priya Kulkarni', 'ATTENDANT', '9100000002', 'priya2', 'priya234', 'ACTIVE');
+INSERT INTO staff (staff_id, staff_name, role, phone, username, password_hash, status) VALUES (3, 'Vivek Bansal', 'SUPERVISOR', '9100000003', 'vivek3', 'vivek345', 'ACTIVE');
 
 DECLARE
   v_entry_id NUMBER;

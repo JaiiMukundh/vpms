@@ -4,6 +4,37 @@ import { query, withConnection } from "@/lib/db";
 
 export const runtime = "nodejs";
 
+async function ensureActiveStaff(staffId) {
+  const result = await query(
+    `SELECT staff_id, staff_name, status
+       FROM staff
+      WHERE staff_id = :staff_id`,
+    { staff_id: staffId },
+  );
+
+  const staff = result.rows?.[0];
+  if (!staff) {
+    throw new Error("Selected staff member was not found.");
+  }
+
+  if (staff.status !== "ACTIVE") {
+    throw new Error("Please select an active staff member.");
+  }
+}
+
+function formatEntryError(error) {
+  const isSlotFull =
+    error?.errorNum === 20002 ||
+    /ORA-20002/i.test(error?.message || "") ||
+    /All compatible slots are currently occupied/i.test(error?.message || "");
+
+  if (isSlotFull) {
+    return "All compatible slots are currently occupied. Please wait for a slot to become free or choose another vehicle type.";
+  }
+
+  return error?.message || "Entry failed.";
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -13,6 +44,8 @@ export async function POST(request) {
     if (!vehicleId || !staffId) {
       throw new Error("Vehicle and staff are required.");
     }
+
+    await ensureActiveStaff(staffId);
 
     const result = await withConnection(async (connection) =>
       connection.execute(
@@ -45,7 +78,6 @@ export async function POST(request) {
       slot: slotResult.rows?.[0] || null,
     });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: formatEntryError(error) }, { status: 400 });
   }
 }
-
