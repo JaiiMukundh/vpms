@@ -40,7 +40,7 @@ export default function AppShell({ children }) {
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200">VPMS</p>
             <h2 className="mt-2 text-xl font-semibold">Vehicle Parking Management System</h2>
             <p className="mt-2 text-sm text-slate-300">
-              Oracle-backed parking operations with clean workflows.
+              Neon-backed parking operations with clean workflows.
             </p>
           </div>
 

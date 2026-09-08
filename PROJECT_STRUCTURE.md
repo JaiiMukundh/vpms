@@ -22,8 +22,8 @@ Main application pages and API routes following Next.js 13+ app router pattern.
 - `reports/page.js` - Reports and analytics page
 
 **API Routes:**
-- `api/movements/entry/route.js` - POST/GET vehicle entry records
-- `api/movements/exit/route.js` - POST/GET vehicle exit records
+- `api/movements/entry/route.js` - POST vehicle entry records
+- `api/movements/exit/route.js` - POST vehicle exit records
 - `api/reports/[name]/route.js` - Dynamic reports endpoint
 - `api/reports/summary/route.js` - Summary reports endpoint
 - `api/resources/[resource]/route.js` - Dynamic resource endpoints
@@ -50,10 +50,7 @@ Database and data utilities.
 - `vpms-data.js` - Database query functions and data operations
 
 ### `/sql` - Database Scripts
-- `schema.sql` - Database table definitions and structure
-- `seed.sql` - Sample data for testing
-- `plsql.sql` - PL/SQL stored procedures
-- `sync_identities.sql` - Identity synchronization script
+- `postgres-schema.sql` - Neon PostgreSQL tables and reporting views
 
 ### `/utils` - Utility Functions
 - `format.js` - Data formatting functions (dates, numbers, etc.)
@@ -65,12 +62,10 @@ Database and data utilities.
 - `jsconfig.json` - JavaScript compiler options
 - `eslint.config.mjs` - ESLint configuration
 - `postcss.config.mjs` - PostCSS configuration
-- `.env.local` - Environment variables (local)
+- `.env.example` - Local environment variable template
 
 ### Other Important Files
 - `README.md` - Project documentation
-- `AGENTS.md` - Copilot agent configuration
-- `CLAUDE.md` - Claude model instructions
 - `/public` - Static assets and files
 
 ## Key Features

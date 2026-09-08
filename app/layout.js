@@ -13,7 +13,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata = {
   title: "VPMS | Vehicle Parking Management System",
-  description: "Oracle-backed vehicle parking management dashboard built with Next.js.",
+  description: "Neon-backed vehicle parking management dashboard built with Next.js.",
 };
 
 export default function RootLayout({ children }) {

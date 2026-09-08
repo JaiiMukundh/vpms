@@ -13,7 +13,6 @@ export function formatDateTime(value) {
     timeStyle: "short",
   }).format(date);
 }
-
 export function formatDate(value) {
   if (!value) {
     return "-";
@@ -47,18 +46,5 @@ export function formatEnumLabel(value) {
     .toLowerCase()
     .replaceAll("_", " ")
     .replace(/\b\w/g, (match) => match.toUpperCase());
-}
-
-export function toDateInput(value) {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return date.toISOString().slice(0, 10);
 }
 

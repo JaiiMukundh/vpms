@@ -73,7 +73,7 @@ export default function DashboardHome() {
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
               Track owners, vehicles, slots, entries, exits, fees, payments, passes, and violations
-              with Oracle-backed business logic.
+              with PostgreSQL-backed business logic.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
@@ -102,7 +102,7 @@ export default function DashboardHome() {
                   value={
                     metric.field === "daily_revenue" ? formatCurrency(value || 0) : value ?? "-"
                   }
-                  helper="Live from Oracle views"
+                  helper="Live from Neon views"
                   icon={Icon}
                 />
               );

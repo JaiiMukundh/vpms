@@ -148,7 +148,7 @@ export default function ReportsPage({ initialTab }) {
     <div className="space-y-5">
       <PageHeader
         title="Reports"
-        description="Quick operational views powered directly by Oracle views and report queries."
+        description="Quick operational views powered directly by PostgreSQL views and report queries."
       />
 
       <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">

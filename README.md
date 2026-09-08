@@ -14,15 +14,15 @@ College-level mini project built with:
 - Dashboard with live parking summary
 - Owners, vehicles, zones, slots, staff, passes, violations, and payments pages
 - Entry and exit workflows with slot reservation and fee calculation
-- Oracle-backed reports for parking operations
+- Neon-backed reports for parking operations
 - Clean responsive sidebar dashboard UI
 
 ## Folder Structure
 
 - `app/` - Next.js routes, API routes, and page screens
 - `components/` - Reusable UI building blocks
-- `lib/` - Oracle connection and shared VPMS metadata
-- `sql/` - Oracle schema, PL/SQL, and seed scripts
+- `lib/` - Neon connection and shared VPMS metadata
+- `sql/` - PostgreSQL schema and reporting views
 - `utils/` - Small display/formatting helpers
 
 ## Setup
