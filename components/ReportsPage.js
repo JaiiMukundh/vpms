@@ -96,6 +96,7 @@ export default function ReportsPage({ initialTab }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
 
   const activeReport = useMemo(
     () => reportItems.find((report) => report.key === activeTab) || reportItems[0],
@@ -104,6 +105,7 @@ export default function ReportsPage({ initialTab }) {
 
   const loadReport = useCallback(async () => {
     setLoading(true);
+    setError("");
     try {
       const url =
         activeTab === "vehicle-history"
@@ -111,9 +113,13 @@ export default function ReportsPage({ initialTab }) {
           : `/api/reports/${activeTab}`;
       const response = await fetch(url, { cache: "no-store" });
       const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load report.");
+      }
       setRows(data.rows || []);
-    } catch {
+    } catch (requestError) {
       setRows([]);
+      setError(requestError.message || "Failed to load report.");
     } finally {
       setLoading(false);
     }
@@ -195,6 +201,10 @@ export default function ReportsPage({ initialTab }) {
 
         {loading ? (
           <p className="text-sm text-slate-500">Loading report...</p>
+        ) : error ? (
+          <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+            {error}
+          </p>
         ) : (
           <DataTable
             columns={reportColumns[activeTab] || []}

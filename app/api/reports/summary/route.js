@@ -12,7 +12,7 @@ export async function GET() {
         query("SELECT COUNT(*) AS total FROM vw_available_slots"),
         query("SELECT COUNT(*) AS total FROM vw_occupied_slots"),
         query(
-          "SELECT COALESCE(SUM(amount_paid), 0) AS total FROM payments WHERE paid_at::date = CURRENT_DATE",
+          "SELECT COALESCE(SUM(amount_paid), 0) AS total FROM payments WHERE CAST(paid_at AS DATE) = CURRENT_DATE",
         ),
         query("SELECT COUNT(*) AS total FROM vw_active_vehicles"),
         query("SELECT COUNT(*) AS total FROM violations WHERE payment_status = 'UNPAID'"),
