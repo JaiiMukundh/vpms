@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import oracledb from "oracledb";
-import { query, withConnection } from "@/lib/db";
+import { query, withTransaction } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -36,25 +35,46 @@ export async function POST(request) {
 
     await ensureActiveStaff(staffId);
 
-    const result = await withConnection(async (connection) =>
-      connection.execute(
-        `BEGIN vpms_pkg.register_exit(:p_entry_id, :p_staff_id, :p_payment_mode, :p_reference_no, :p_exit_id, :p_fee_id, :p_payment_id); END;`,
-        {
-          p_entry_id: entryId,
-          p_staff_id: staffId,
-          p_payment_mode: paymentMode,
-          p_reference_no: referenceNo,
-          p_exit_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
-          p_fee_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
-          p_payment_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
-        },
-        { autoCommit: true },
-      ),
-    );
+    const { exitId, feeId, paymentId } = await withTransaction(async (connection) => {
+      const active = await connection.query(
+        `SELECT e.vehicle_id, e.slot_id, e.entry_time, v.vehicle_type, z.base_rate_per_hour
+           FROM entries e
+           JOIN vehicles v ON v.vehicle_id = e.vehicle_id
+           JOIN slots s ON s.slot_id = e.slot_id
+           JOIN parking_zones z ON z.zone_id = s.zone_id
+          WHERE e.entry_id = $1 AND e.status = 'ACTIVE'
+          FOR UPDATE OF e`,
+        [entryId],
+      );
+      const record = active.rows[0];
+      if (!record) throw new Error("Active entry not found.");
 
-    const exitId = result.outBinds.p_exit_id;
-    const feeId = result.outBinds.p_fee_id;
-    const paymentId = result.outBinds.p_payment_id;
+      const durationMinutes = Math.max(1, Math.ceil((Date.now() - new Date(record.entry_time).getTime()) / 60000));
+      const factor = { TWO_WHEELER: 1, FOUR_WHEELER: 1.5, HEAVY_VEHICLE: 2 }[record.vehicle_type] || 1;
+      const feeAmount = Math.round(Math.max(1, Math.ceil(durationMinutes / 60)) * Number(record.base_rate_per_hour) * factor * 100) / 100;
+
+      const fee = await connection.query(
+        `INSERT INTO fees (entry_id, vehicle_id, vehicle_type, duration_minutes, rate_per_hour, fee_amount)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING fee_id`,
+        [entryId, record.vehicle_id, record.vehicle_type, durationMinutes, record.base_rate_per_hour, feeAmount],
+      );
+      const exit = await connection.query(
+        `INSERT INTO exits (entry_id, vehicle_id, slot_id, staff_id, duration_minutes, fee_amount, payment_status, reference_no)
+         VALUES ($1, $2, $3, $4, $5, $6, 'PAID', $7) RETURNING exit_id`,
+        [entryId, record.vehicle_id, record.slot_id, staffId, durationMinutes, feeAmount, referenceNo],
+      );
+      const payment = await connection.query(
+        `INSERT INTO payments (fee_id, exit_id, amount_paid, payment_mode, reference_no)
+         VALUES ($1, $2, $3, $4, COALESCE($5, 'PAY-' || $2)) RETURNING payment_id`,
+        [fee.rows[0].fee_id, exit.rows[0].exit_id, feeAmount, paymentMode.toUpperCase(), referenceNo],
+      );
+      await connection.query(`UPDATE entries SET status = 'CLOSED' WHERE entry_id = $1`, [entryId]);
+      await connection.query(
+        `UPDATE slots SET status = 'AVAILABLE', current_vehicle_id = NULL, occupied_at = NULL WHERE slot_id = $1`,
+        [record.slot_id],
+      );
+      return { exitId: exit.rows[0].exit_id, feeId: fee.rows[0].fee_id, paymentId: payment.rows[0].payment_id };
+    });
 
     const exitResult = await query(
       `SELECT x.exit_id, x.entry_id, x.vehicle_id, v.vehicle_number, x.slot_id, s.slot_code, x.duration_minutes, x.fee_amount, x.payment_status, x.reference_no

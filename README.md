@@ -5,9 +5,9 @@ College-level mini project built with:
 - Next.js App Router
 - JavaScript only
 - Tailwind CSS
-- Oracle Database
-- PL/SQL package, procedures, functions, triggers, and views
-- `node-oracledb`
+- Neon PostgreSQL
+- PostgreSQL tables and reporting views
+- `@neondatabase/serverless`
 
 ## Features
 
@@ -27,25 +27,17 @@ College-level mini project built with:
 
 ## Setup
 
-1. Copy `.env.local.example` to `.env.local` and fill in Oracle credentials.
+1. Copy `.env.example` to `.env.local` and set `DATABASE_URL` to the connection string from Neon.
 2. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Run the Oracle scripts in this order:
+3. Run the PostgreSQL schema in the Neon SQL Editor:
 
 ```sql
-@sql/schema.sql
-@sql/plsql.sql
-@sql/seed.sql
-```
-
-If you already have the data loaded and only need to fix identity counters after manual inserts or reruns, run:
-
-```sql
-@sql/sync_identities.sql
+-- paste the contents of sql/postgres-schema.sql
 ```
 
 4. Start the app:
@@ -60,12 +52,12 @@ npm run dev
 npm run build
 ```
 
-## Oracle Notes
+## Neon Notes
 
-- The project uses connection pooling through `node-oracledb`.
-- Keep the Oracle service and Instant Client available on the machine.
-- The app expects the schema objects created by the SQL scripts before opening the dashboard.
-- After loading the seed data, the identity counters are synced so new inserts do not collide with seeded primary keys.
+- The project connects using `DATABASE_URL` and the Neon serverless driver.
+- The app expects the objects in `sql/postgres-schema.sql` to exist before opening the dashboard.
+- Existing Oracle data is not migrated; the Neon database starts empty.
+- In Vercel, add `DATABASE_URL` to the Production, Preview, and Development environments, then redeploy.
 
 ## Demo Flow
 

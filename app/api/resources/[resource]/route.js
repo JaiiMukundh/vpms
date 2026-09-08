@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import oracledb from "oracledb";
 import { execute, query, withConnection } from "@/lib/db";
 import { formatOptionLabel, getResourceDefinition } from "@/lib/vpms-data";
 
@@ -84,7 +83,7 @@ function buildInsertSql(definition, payload) {
 
   const columns = fields.map((field) => field.name);
   const values = fields
-    .map((field) => (field.type === "date" ? `TO_DATE(:${field.name}, 'YYYY-MM-DD')` : `:${field.name}`))
+    .map((field) => `:${field.name}`)
     .join(", ");
   return {
     sql: `INSERT INTO ${definition.table} (${columns.join(", ")}) VALUES (${values})`,
@@ -99,7 +98,7 @@ function buildUpdateSql(definition, payload) {
   }
 
   const assignments = fields
-    .map((field) => `${field.name} = ${field.type === "date" ? `TO_DATE(:${field.name}, 'YYYY-MM-DD')` : `:${field.name}`}`)
+    .map((field) => `${field.name} = :${field.name}`)
     .join(", ");
   return {
     sql: `UPDATE ${definition.table} SET ${assignments} WHERE ${definition.key} = :id`,
@@ -179,12 +178,10 @@ function validatePayload(definition, payload, options = {}) {
 }
 
 async function fetchIds(connection, sql, binds, columnName) {
-  const result = await connection.execute(sql, binds, {
-    outFormat: oracledb.OUT_FORMAT_OBJECT,
-  });
+  const result = await connection.execute(sql, binds);
 
   return (result.rows || [])
-    .map((row) => row[columnName])
+    .map((row) => row[columnName.toLowerCase()])
     .filter((value) => value !== null && value !== undefined);
 }
 

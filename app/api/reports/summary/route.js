@@ -12,12 +12,12 @@ export async function GET() {
         query("SELECT COUNT(*) AS total FROM vw_available_slots"),
         query("SELECT COUNT(*) AS total FROM vw_occupied_slots"),
         query(
-          "SELECT NVL(SUM(amount_paid), 0) AS total FROM payments WHERE TRUNC(paid_at) = TRUNC(SYSDATE)",
+          "SELECT COALESCE(SUM(amount_paid), 0) AS total FROM payments WHERE paid_at::date = CURRENT_DATE",
         ),
         query("SELECT COUNT(*) AS total FROM vw_active_vehicles"),
         query("SELECT COUNT(*) AS total FROM violations WHERE payment_status = 'UNPAID'"),
         query(
-          "SELECT COUNT(*) AS total FROM passes WHERE status = 'ACTIVE' AND end_date >= TRUNC(SYSDATE)",
+          "SELECT COUNT(*) AS total FROM passes WHERE status = 'ACTIVE' AND end_date >= CURRENT_DATE",
         ),
       ]);
 

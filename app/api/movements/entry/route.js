@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import oracledb from "oracledb";
-import { query, withConnection } from "@/lib/db";
+import { query, withTransaction } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -47,21 +46,46 @@ export async function POST(request) {
 
     await ensureActiveStaff(staffId);
 
-    const result = await withConnection(async (connection) =>
-      connection.execute(
-        `BEGIN vpms_pkg.register_entry(:p_vehicle_id, :p_staff_id, :p_entry_id, :p_slot_id); END;`,
-        {
-          p_vehicle_id: vehicleId,
-          p_staff_id: staffId,
-          p_entry_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
-          p_slot_id: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER },
-        },
-        { autoCommit: true },
-      ),
-    );
+    const { entryId, slotId } = await withTransaction(async (connection) => {
+      const vehicle = await connection.query(
+        `SELECT vehicle_type FROM vehicles WHERE vehicle_id = $1 AND status = 'ACTIVE'`,
+        [vehicleId],
+      );
+      if (!vehicle.rows[0]) throw new Error("Active vehicle was not found.");
 
-    const entryId = result.outBinds.p_entry_id;
-    const slotId = result.outBinds.p_slot_id;
+      const active = await connection.query(
+        `SELECT 1 FROM entries WHERE vehicle_id = $1 AND status = 'ACTIVE'`,
+        [vehicleId],
+      );
+      if (active.rowCount) throw new Error("Vehicle already has an active entry.");
+
+      const slot = await connection.query(
+        `SELECT s.slot_id
+           FROM slots s
+           JOIN parking_zones z ON z.zone_id = s.zone_id
+          WHERE s.status = 'AVAILABLE'
+            AND z.status = 'ACTIVE'
+            AND (s.slot_type = $1 OR s.slot_type = 'ANY')
+          ORDER BY CASE WHEN s.slot_type = $1 THEN 0 ELSE 1 END, s.slot_code
+          LIMIT 1
+          FOR UPDATE OF s`,
+        [vehicle.rows[0].vehicle_type],
+      );
+      if (!slot.rows[0]) throw new Error("All compatible slots are currently occupied for this vehicle type.");
+
+      const slotId = slot.rows[0].slot_id;
+      const entry = await connection.query(
+        `INSERT INTO entries (vehicle_id, slot_id, staff_id)
+         VALUES ($1, $2, $3) RETURNING entry_id`,
+        [vehicleId, slotId, staffId],
+      );
+      await connection.query(
+        `UPDATE slots SET status = 'OCCUPIED', current_vehicle_id = $1, occupied_at = NOW()
+         WHERE slot_id = $2`,
+        [vehicleId, slotId],
+      );
+      return { entryId: entry.rows[0].entry_id, slotId };
+    });
 
     const slotResult = await query(
       `SELECT s.slot_code, z.zone_name
